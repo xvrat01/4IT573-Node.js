@@ -37,6 +37,7 @@ const main = async () => {
             }
         }
         try {
+            // Možná by bylo lepší Promise.allSettled, aby mi to vypsalo, kdyby byla chyba u více souborů.
             await Promise.all(promises)
             console.log("Finished writing all files")
         } catch (err) {
