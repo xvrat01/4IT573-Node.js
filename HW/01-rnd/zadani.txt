@@ -1,0 +1,2 @@
+Úkol č. 1
+Vytvořte program, který bude s uživatelem hrát hru “hádej číslo, které si myslím”. Program si na začátku vygeneruje náhodné číslo od 0 do 10 a následně se uživatele zeptá na jeho tip. Pokud se uživatel trefí, program mu to oznámí a ukončí se. Pokud se netrefí, program uživateli oznámí zda byl tip větší či menší než hádané číslo a zeptá se uživatele na další tip. Pokud se uživatel netrefí ani po pěti pokusech, program ho informuje o prohře a ukončí se. Program spouštějte v konzoli prohlížeče.
