@@ -1,0 +1,13 @@
+{
+  "name": "hw04",
+  "version": "1.0.0",
+  "description": "hw04",
+  "license": "ISC",
+  "author": "vrat03",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node --watch index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
