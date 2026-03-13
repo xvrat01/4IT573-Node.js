@@ -103,6 +103,7 @@ server.listen(8080, "localhost", ()=> {
 
 const getContentType = (filepath) => {
     const ext = path.extname(filepath)
+    ext = ext.toLowerCase()
     return mimeTypes[ext] || "application/octet-stream"
 }
 
