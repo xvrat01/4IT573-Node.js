@@ -30,8 +30,15 @@ function getReturnUrl(c) {
     }
 }
 
-app.get(async(c, next) => {
+app.use(async(c, next) => {
     console.log(c.req.method, c.req.url)
+    if (c.req.method === 'POST') {
+        const formData = await c.req.formData()
+        console.log('Form data:')
+        for (const [key, value] of formData.entries()) {
+            console.log(`  ${key}: ${value}`)
+        }
+    }
     await next()
 })
 
