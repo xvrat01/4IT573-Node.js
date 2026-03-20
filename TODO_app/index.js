@@ -63,17 +63,6 @@ app.get('/remove-todo/:id', async (c) => {
     return c.redirect('/')
 })
 
-app.get('/toggle-todo/:id', async (c) => {
-    const id = Number(c.req.param('id'))
-    const todo = todos.find((todo) => todo.id === id)
-
-    if (!todo) {
-        return c.redirect('/')
-    }
-    todo.done = !todo.done
-    return c.redirect(getReturnUrl(c))
-})
-
 app.post('/edit-todo/:id', async (c) => {
     const id = Number(c.req.param('id'))
     const body = await c.req.formData()
