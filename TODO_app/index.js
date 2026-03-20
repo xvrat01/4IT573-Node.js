@@ -45,9 +45,19 @@ app.use(async(c, next) => {
 })
 
 app.get('/', async(c) => {
+    const filter = c.req.query('filter') || 'all'
+    let filteredTodos = todos
+
+    if (filter === 'completed') {
+        filteredTodos = todos.filter((todo) => todo.done)
+    } else if (filter === 'pending') {
+        filteredTodos = todos.filter((todo) => !todo.done)
+    }
+
     const html = await ejs.renderFile('views/index.html', {
         name: username,
-        todos: todos,
+        todos: filteredTodos,
+        filter: filter,
         }
     )
 
@@ -77,7 +87,7 @@ app.get('/remove-todo/:id', async (c) => {
     return c.redirect('/')
 })
 
-app.get('delete-completed', async (c) => {
+app.get('/delete-completed', async (c) => {
     todos = todos.filter((todo) => !todo.done)
     return c.redirect('/')
 })

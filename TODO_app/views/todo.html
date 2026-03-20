@@ -11,21 +11,22 @@
     <details>
         <summary>Upravit todo</summary>
         Pouze pole, která vyplníš, budou aktualizována. Pro změnu stavu zaškrtni checkbox.
-        <form method="post" action="/edit-todo/<%= todo.id %>" style="width: 250px; border: 2px solid black; margin-bottom: 5px; padding: 5px;"> 
-        <label>
-            Název:
-            <input type="text" name="title" placeholder="<%= todo.title %>"/>
-        </label><br>
-        <label>
-            Popis:
-            <textarea name="description" placeholder="<%= todo.description%>" rows="4" cols="30"></textarea>
-        </label><br>
-        <label>
-            Označit jako <%= todo.done ? 'ne' : '' %>hotové:
-            <input type="checkbox" name="toggle">
-        </label><br>
-        <button type="submit">Uložit změny</button>
-    </form>
+        <hr style="width: 300px; margin-left: 0px">
+        <form method="post" action="/edit-todo/<%= todo.id %>" style="width: 250px; margin-bottom: 5px; padding: 5px;"> 
+            <label>
+                Název:
+                <input type="text" name="title" placeholder="<%= todo.title %>"/>
+            </label><br>
+            <label>
+                Popis:<br>
+                <textarea name="description" placeholder="<%= todo.description%>" rows="4" cols="30"></textarea>
+            </label><br>
+            <label>
+                Označit jako <%= todo.done ? 'ne' : '' %>hotové:
+                <input type="checkbox" name="toggle">
+            </label><br>
+            <button type="submit">Uložit změny</button>
+        </form>
     </details>
     <hr style="width: 300px; margin-left: 0px">
     <% if (todo.done) { %>

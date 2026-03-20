@@ -7,29 +7,48 @@
 </head>
 <body>
     <h1>Hello <%= name %></h1>
+    <form method="get" action="/">
+        <label>
+            Zobrazit:
+            <select name="filter" onchange="this.form.submit()">
+                <option value="all" <%= filter === 'all' ? 'selected' : '' %>>Vše</option>
+                <option value="completed" <%= filter === 'completed' ? 'selected' : '' %>>Dokončené</option>
+                <option value="pending" <%= filter === 'pending' ? 'selected' : '' %>>Nedokončené</option>
+            </select>
+        </label>
+    </form>
+    <hr style="width: 300px; margin-left: 0px">
     <table>
-        <% for (const todo of todos) { %>
+        <h2>Seznam TODO</h2>
+        <% if (todos.length === 0) { %>
             <tr>
-                <td>
-                    <%= todo.done?  '✅' : '❌' %>
-                </td>
-                <td style="min-width: 100px; max-width: 200px">
-                    <a href="/todo/<%= todo.id %>"><%= todo.title %></a>
-                </td>
-                <td>
-                    <form method="post" action="edit-todo/<%= todo.id %>" style="display: inline">
-                        <input type="checkbox" name="toggle" checked hidden>
-                        <button type="submit">Onačit jako <%= todo.done ? 'ne' : '' %>hotové</button>
-                    </form>
-                    <% if (todo.done) { %>
-                        <a href="/remove-todo/<%= todo.id %>" onclick="return confirm('Opravdu chceš odstranit todo \'<%= todo.title %>\'?')">Odstranit</a>
-                    <% } %>
-                </td>
+                <td colspan="3">Žádné todo k zobrazení.</td>
             </tr>
+        <% } else { %>
+            <% for (const todo of todos) { %>
+                <tr>
+                    <td>
+                        <%= todo.done?  '✅' : '❌' %>
+                    </td>
+                    <td style="min-width: 100px; max-width: 200px">
+                        <a href="/todo/<%= todo.id %>"><%= todo.title %></a>
+                    </td>
+                    <td>
+                        <form method="post" action="edit-todo/<%= todo.id %>" style="display: inline">
+                            <input type="checkbox" name="toggle" checked hidden>
+                            <button type="submit">Onačit jako <%= todo.done ? 'ne' : '' %>hotové</button>
+                        </form>
+                        <% if (todo.done) { %>
+                            <a href="/remove-todo/<%= todo.id %>" onclick="return confirm('Opravdu chceš odstranit todo \'<%= todo.title %>\'?')">Odstranit</a>
+                        <% } %>
+                    </td>
+                </tr>
+            <% } %>
         <% } %>
     </table>
     <hr style="width: 300px; margin-left: 0px">
-    <form method="post" action="/add-todo" style="width: 250px; border: 2px solid black; margin-bottom: 5px; padding: 5px;">
+    <h2>Přidat nové TODO</h2>
+    <form method="post" action="/add-todo" style="width: 250px; margin-bottom: 5px; padding: 5px;">
         <label>
             Název:
             <input type="text" name="title" required placeholder="Název nového todo"/>
@@ -40,6 +59,7 @@
         </label><br>
         <button type="submit">Přidat todo</button>
     </form>
+    <hr style="width: 300px; margin-left: 0px">
     <% if (todos.filter((todo) => todo.done).length > 0) { %>
         <a href="/delete-completed" onclick="return confirm('Opravdu chceš odstranit všechna dokončená todo?')">Odstranit všechna dokončená todo</a>
     <% } %>  
