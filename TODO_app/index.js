@@ -57,11 +57,15 @@ app.get('/', async(c) => {
 app.post('/add-todo', async(c) => {
     const body = await c.req.formData()
     const title = body.get('title')
+    const description = body.get('description')
 
+    if (!title) {
+        return c.redirect('/')
+    }
     todos.push({
         id: todos.length + 1,
         title,
-        description: body.get('description') || '',
+        description: description || '',
         done: false
     })
     return c.redirect('/')
@@ -78,6 +82,7 @@ app.post('/edit-todo/:id', async (c) => {
     const body = await c.req.formData()
     let title = body.get('title')
     let toggle = Boolean(body.get('toggle'))
+    let description = body.get('description')
     const todo = todos.find((todo) => todo.id === id)
 
     if (!todo) {
@@ -88,6 +93,9 @@ app.post('/edit-todo/:id', async (c) => {
         }
         if (toggle) {
             todo.done = !todo.done
+        }
+        if (description) {
+            todo.description = description
         }
     }
 

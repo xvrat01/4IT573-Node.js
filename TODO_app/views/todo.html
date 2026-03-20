@@ -10,13 +10,14 @@
     <p><%= todo.description%></p>
     <details>
         <summary>Upravit todo</summary>
+        Pouze pole, která vyplníš, budou aktualizována. Pro změnu stavu zaškrtni checkbox.
         <form method="post" action="/edit-todo/<%= todo.id %>" style="width: 250px; border: 2px solid black; margin-bottom: 5px; padding: 5px;"> 
         <label>
             Název:
             <input type="text" name="title" placeholder="<%= todo.title %>"/>
         </label><br>
         <label>
-            Popis:<br>
+            Popis:
             <textarea name="description" placeholder="<%= todo.description%>" rows="4" cols="30"></textarea>
         </label><br>
         <label>

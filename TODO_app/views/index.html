@@ -29,8 +29,15 @@
         <% } %>
     </table>
     <hr style="width: 300px; margin-left: 0px">
-    <form method="post" action="/add-todo">
-        <input type="text" minlength="1" placeholder="Název nového todo" name="title" required/>
+    <form method="post" action="/add-todo" style="width: 250px; border: 2px solid black; margin-bottom: 5px; padding: 5px;">
+        <label>
+            Název:
+            <input type="text" name="title" required placeholder="Název nového todo"/>
+        </label><br>
+        <label>
+            Popis:<br>
+            <textarea name="description" placeholder="Popis nového todo" rows="4" cols="30"></textarea>
+        </label><br>
         <button type="submit">Přidat todo</button>
     </form>
 </body>
