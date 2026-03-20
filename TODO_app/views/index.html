@@ -40,5 +40,8 @@
         </label><br>
         <button type="submit">Přidat todo</button>
     </form>
+    <% if (todos.filter((todo) => todo.done).length > 0) { %>
+        <a href="/delete-completed" onclick="return confirm('Opravdu chceš odstranit všechna dokončená todo?')">Odstranit všechna dokončená todo</a>
+    <% } %>  
 </body>
 </html>

@@ -77,6 +77,11 @@ app.get('/remove-todo/:id', async (c) => {
     return c.redirect('/')
 })
 
+app.get('delete-completed', async (c) => {
+    todos = todos.filter((todo) => !todo.done)
+    return c.redirect('/')
+})
+
 app.post('/edit-todo/:id', async (c) => {
     const id = Number(c.req.param('id'))
     const body = await c.req.formData()
