@@ -4,6 +4,8 @@ import ejs from 'ejs'
 
 const app = new Hono()
 
+const username = "Tomáš"
+
 let todos = [
     {
         id: 1,
@@ -17,6 +19,17 @@ let todos = [
     }
 ]
 
+function getReturnUrl(c) {
+    const referer = c.req.header('referer')
+    if (!referer) return '/'
+    try {
+        const url = new URL(referer)
+        return url.pathname + url.search
+    } catch {
+        return '/'
+    }
+}
+
 app.get(async(c, next) => {
     console.log(c.req.method, c.req.url)
     await next()
@@ -24,10 +37,11 @@ app.get(async(c, next) => {
 
 app.get('/', async(c) => {
     const html = await ejs.renderFile('views/index.html', {
-        name: 'Tomáš',
+        name: username,
         todos: todos,
         }
     )
+
     return c.html(html)
 })
 
@@ -40,25 +54,61 @@ app.post('/add-todo', async(c) => {
         title,
         done: false
     })
-
     return c.redirect('/')
 })
 
 app.get('/remove-todo/:id', async (c) => {
-  const id = Number(c.req.param('id'))
-
-  todos = todos.filter((todo) => todo.id !== id)
-
-  return c.redirect('/')
+    const id = Number(c.req.param('id'))
+    todos = todos.filter((todo) => todo.id !== id)
+    return c.redirect('/')
 })
 
 app.get('/toggle-todo/:id', async (c) => {
-  const id = Number(c.req.param('id'))
+    const id = Number(c.req.param('id'))
+    const todo = todos.find((todo) => todo.id === id)
 
-  const todo = todos.find((todo) => todo.id === id)
-  todo.done = !todo.done
+    if (!todo) {
+        return c.redirect('/')
+    }
+    todo.done = !todo.done
+    return c.redirect(getReturnUrl(c))
+})
 
-  return c.redirect('/')
+app.post('/edit-todo/:id', async (c) => {
+    const id = Number(c.req.param('id'))
+    const body = await c.req.formData()
+    let title = body.get('title')
+    let toggle = Boolean(body.get('toggle'))
+    const todo = todos.find((todo) => todo.id === id)
+
+    if (!todo) {
+        return c.redirect('/')
+    } else {
+        if (title) {
+            todo.title = title
+        }
+        if (toggle) {
+            todo.done = !todo.done
+        }
+    }
+
+    return c.redirect(getReturnUrl(c))
+})
+
+app.get('/todo/:id', async (c) => {
+    const id = Number(c.req.param('id'))
+    const todo = todos.find((todo) => todo.id === id)
+    if (!todo) {
+        c.status(404)
+        const html = await ejs.renderFile('views/404.html')
+        return c.html(html)
+    }
+
+    const html = await ejs.renderFile('views/todo.html', {
+        todo: todo,
+        }
+    )
+    return c.html(html)
 })
 
 app.notFound(async(c) => {

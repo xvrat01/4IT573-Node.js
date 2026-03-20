@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TODO</title>
+</head>
+<body>
+    <h1><%= todo.done?  '✅' : '❌' %> <%=todo.title %></h1>
+    <form method="post" action="/edit-todo/<%= todo.id %>" style="width: 220px; border: 2px solid black; margin-bottom: 5px; padding: 5px;"> 
+        <label>
+            Název:
+            <input type="text" name="title" placeholder="<%= todo.title %>"/>
+        </label><br>
+        <label>
+            Označit jako <%= todo.done ? 'ne' : '' %>hotové:
+            <input type="checkbox" name="toggle">
+        </label><br>
+        <button type="submit">Uložit změny</button>
+    </form>
+    <hr style="width: 300px; margin-left: 0px">
+    <% if (todo.done) { %>
+        <a href="/remove-todo/<%= todo.id %>" onclick="return confirm('Opravdu chceš odstranit todo \'<%= todo.title %>\'?')">Odstranit</a><br><br>
+    <% } %>
+    <a href="/">Zpět na hlavní stránku</a>
+</body>
+</html>
