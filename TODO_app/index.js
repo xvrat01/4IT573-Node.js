@@ -10,11 +10,13 @@ let todos = [
     {
         id: 1,
         title: 'Zajít na pivo',
+        description: 'S kamarády do hospody',
         done: true
     },
     {
         id: 2,
         title: 'Udělat úkol',
+        description: 'Dokončit úkol na node.js',
         done: false
     }
 ]
@@ -59,6 +61,7 @@ app.post('/add-todo', async(c) => {
     todos.push({
         id: todos.length + 1,
         title,
+        description: body.get('description') || '',
         done: false
     })
     return c.redirect('/')
