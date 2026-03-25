@@ -1,25 +1,18 @@
 import { Hono } from 'hono'
 import { serve } from '@hono/node-server'
 import ejs from 'ejs'
+import { drizzle } from "drizzle-orm/libsql"
+import { todosTable } from './src/schema.js'
+import { eq } from "drizzle-orm"
+
+const db = drizzle({
+  connection: "file:db.sqlite",
+  logger: true,
+})
 
 const app = new Hono()
 
 const username = "Tomáš"
-
-let todos = [
-    {
-        id: 1,
-        title: 'Zajít na pivo',
-        description: 'S kamarády do hospody',
-        done: true
-    },
-    {
-        id: 2,
-        title: 'Udělat úkol',
-        description: 'Dokončit úkol na node.js',
-        done: false
-    }
-]
 
 function getReturnUrl(c) {
     const referer = c.req.header('referer')
@@ -46,6 +39,7 @@ app.use(async(c, next) => {
 
 app.get('/', async(c) => {
     const filter = c.req.query('filter') || 'all'
+    const todos = await db.select().from(todosTable).all()
     let filteredTodos = todos
 
     if (filter === 'completed') {
@@ -72,8 +66,7 @@ app.post('/add-todo', async(c) => {
     if (!title) {
         return c.redirect('/')
     }
-    todos.push({
-        id: todos.length + 1,
+    await db.insert(todosTable).values({
         title,
         description: description || '',
         done: false
@@ -83,12 +76,12 @@ app.post('/add-todo', async(c) => {
 
 app.get('/remove-todo/:id', async (c) => {
     const id = Number(c.req.param('id'))
-    todos = todos.filter((todo) => todo.id !== id)
+    await db.delete(todosTable).where(eq(todosTable.id, id))
     return c.redirect('/')
 })
 
 app.get('/delete-completed', async (c) => {
-    todos = todos.filter((todo) => !todo.done)
+    await db.delete(todosTable).where(eq(todosTable.done, true))
     return c.redirect('/')
 })
 
@@ -98,33 +91,32 @@ app.post('/edit-todo/:id', async (c) => {
     let title = body.get('title')
     let toggle = Boolean(body.get('toggle'))
     let description = body.get('description')
-    const todo = todos.find((todo) => todo.id === id)
+    const todo = await db.select().from(todosTable).where(eq(todosTable.id, id))
+    let updatedFields = {}
 
     if (!todo) {
         return c.redirect('/')
     } else {
         if (title) {
-            todo.title = title
+            updatedFields.title = title
         }
         if (toggle) {
-            todo.done = !todo.done
+            updatedFields.done = !todo.done
         }
         if (description) {
-            todo.description = description
+            updatedFields.description = description
         }
     }
+
+    await db.update(todosTable).set(updatedFields).where(eq(todosTable.id, id))
 
     return c.redirect(getReturnUrl(c))
 })
 
 app.get('/todo/:id', async (c) => {
     const id = Number(c.req.param('id'))
-    const todo = todos.find((todo) => todo.id === id)
-    if (!todo) {
-        c.status(404)
-        const html = await ejs.renderFile('views/404.html')
-        return c.html(html)
-    }
+    const todo = await db.select().from(todosTable).where(eq(todosTable.id, id)).get()
+    if (!todo) return await next()
 
     const html = await ejs.renderFile('views/todo.html', {
         todo: todo,
