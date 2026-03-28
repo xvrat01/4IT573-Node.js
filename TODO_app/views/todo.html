@@ -4,31 +4,62 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TODO</title>
+    <style>
+        .priority-low {
+            color: #00ff0d;
+            font-weight: 600;
+        }
+
+        .priority-normal {
+            color: rgb(255, 115, 0);
+            font-weight: 600;
+        }
+
+        .priority-high {
+            color: #ff0000;
+            font-weight: 700;
+        }
+    </style>
 </head>
 <body>
     <h1><%= todo.done?  '✅' : '❌' %> <%=todo.title %></h1>
-    <p><%= todo.description%></p>
+    <p style="font-weight: bold;">Priorita: 
+        <span class="<%= todo.priority === 'nízká' ? 'priority-low' : (todo.priority === 'vysoká' ? 'priority-high' : 'priority-normal') %>">
+            <%= todo.priority %>
+        </span>
+    </p>
+    <% if (todo.description !== '') { %>
+        <p><span style="font-weight: bold;">Popis:</span> <%= todo.description %></p>
+    <% } %>
     <details>
         <summary>Upravit todo</summary>
         Pouze pole, která vyplníš, budou aktualizována. Pro změnu stavu zaškrtni checkbox.
-        <hr style="width: 300px; margin-left: 0px">
+        <hr style="width: 500px; margin-left: 0px">
         <form method="post" action="/edit-todo/<%= todo.id %>" style="width: 250px; margin-bottom: 5px; padding: 5px;"> 
             <label>
                 Název:
                 <input type="text" name="title" placeholder="<%= todo.title %>"/>
             </label><br>
             <label>
+                Priorita:
+                <select name="priority">
+                    <option value="1" <%= todo.priority === 'nízká' ? 'selected' : '' %>>Nízká</option>
+                    <option value="2" <%= todo.priority === 'normální' ? 'selected' : '' %>>Normální</option>
+                    <option value="3" <%= todo.priority === 'vysoká' ? 'selected' : '' %>>Vysoká</option>
+                </select>
+            </label><br>
+            <label>
                 Popis:<br>
                 <textarea name="description" placeholder="<%= todo.description%>" rows="4" cols="30"></textarea>
             </label><br>
             <label>
-                Označit jako <%= todo.done ? 'ne' : '' %>hotové:
+                Označit jako <%= todo.done ? 'ne' : '' %>dokončené:
                 <input type="checkbox" name="toggle">
             </label><br>
             <button type="submit">Uložit změny</button>
         </form>
     </details>
-    <hr style="width: 300px; margin-left: 0px">
+    <hr style="width: 500px; margin-left: 0px">
     <% if (todo.done) { %>
         <a href="/remove-todo/<%= todo.id %>" onclick="return confirm('Opravdu chceš odstranit todo \'<%= todo.title %>\'?')">Odstranit</a><br><br>
     <% } %>

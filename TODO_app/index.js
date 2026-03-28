@@ -25,6 +25,22 @@ function getReturnUrl(c) {
     }
 }
 
+function mapPriority(priorityValue) {
+    switch (String(priorityValue)) {
+        case '1':
+        case 'nízká':
+            return 'nízká'
+        case '2':
+        case 'normální':
+            return 'normální'
+        case '3':
+        case 'vysoká':
+            return 'vysoká'
+        default:
+            return 'normální'
+    }
+}
+
 app.use(async(c, next) => {
     console.log(c.req.method, c.req.url)
     if (c.req.method === 'POST') {
@@ -38,20 +54,57 @@ app.use(async(c, next) => {
 })
 
 app.get('/', async(c) => {
-    const filter = c.req.query('filter') || 'all'
+    const doneFilter = c.req.query('done') || 'all'
+    const priorityFilter = c.req.query('priority') || '0'
+    const sort = c.req.query('sort') || 'default'
     const todos = await db.select().from(todosTable).all()
     let filteredTodos = todos
 
-    if (filter === 'completed') {
-        filteredTodos = todos.filter((todo) => todo.done)
-    } else if (filter === 'pending') {
-        filteredTodos = todos.filter((todo) => !todo.done)
+    if (doneFilter !== 'all') {
+        switch (doneFilter) {
+            case 'completed':
+                filteredTodos = todos.filter((todo) => todo.done)
+                break
+            case 'pending':
+                filteredTodos = todos.filter((todo) => !todo.done)
+                break
+            default:
+                filteredTodos = todos
+        }
+    }
+    
+
+    if (priorityFilter !== '0') {
+        const mappedPriority = mapPriority(priorityFilter)
+        filteredTodos = filteredTodos.filter((todo) => todo.priority === mappedPriority)
+    }
+
+    if(sort !== 'default') {
+        switch (sort) {
+            case 'doneFirst':
+                filteredTodos.sort((a, b) => b.done - a.done)
+                break
+            case 'pendingFirst':
+                filteredTodos.sort((a, b) => a.done - b.done)
+                break
+            case '↓ priority':
+                const priorityOrder = { 'nízká': 1, 'normální': 2, 'vysoká': 3 }
+                filteredTodos.sort((a, b) => priorityOrder[b.priority] - priorityOrder[a.priority])
+                break
+            case '↑ priority':
+                const priorityOrderAsc = { 'nízká': 1, 'normální': 2, 'vysoká': 3 }
+                filteredTodos.sort((a, b) => priorityOrderAsc[a.priority] - priorityOrderAsc[b.priority])
+                break
+            default:
+        }  
     }
 
     const html = await ejs.renderFile('views/index.html', {
         name: username,
         todos: filteredTodos,
-        filter: filter,
+        doneFilter: doneFilter,
+        priorityFilter: priorityFilter,
+        sort: sort
         }
     )
 
@@ -62,13 +115,16 @@ app.post('/add-todo', async(c) => {
     const body = await c.req.formData()
     const title = body.get('title')
     const description = body.get('description')
+    const priority = body.get('priority')
+    const mappedPriority = mapPriority(priority)
 
     if (!title) {
         return c.redirect('/')
     }
     await db.insert(todosTable).values({
         title,
-        description: description || '',
+        priority: mappedPriority,
+        description: description,
         done: false
     })
     return c.redirect('/')
@@ -91,7 +147,9 @@ app.post('/edit-todo/:id', async (c) => {
     let title = body.get('title')
     let toggle = Boolean(body.get('toggle'))
     let description = body.get('description')
-    const todo = await db.select().from(todosTable).where(eq(todosTable.id, id))
+    let priority = body.get('priority')
+    const mappedPriority = mapPriority(priority)
+    const todo = await db.select().from(todosTable).where(eq(todosTable.id, id)).get()
     let updatedFields = {}
 
     if (!todo) {
@@ -105,6 +163,9 @@ app.post('/edit-todo/:id', async (c) => {
         }
         if (description) {
             updatedFields.description = description
+        }
+        if (mappedPriority) {
+            updatedFields.priority = mappedPriority
         }
     }
 
