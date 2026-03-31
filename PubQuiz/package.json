@@ -1,0 +1,23 @@
+{
+  "name": "pubquiz",
+  "version": "1.0.0",
+  "description": "PubQuiz app",
+  "license": "ISC",
+  "author": "vrat03",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.19.12",
+    "@libsql/client": "^0.17.2",
+    "drizzle-kit": "^0.31.10",
+    "drizzle-orm": "^0.45.2",
+    "ejs": "^5.0.1",
+    "hono": "^4.12.9",
+    "socket.io": "^4.8.3",
+    "ws": "^8.20.0"
+  }
+}
