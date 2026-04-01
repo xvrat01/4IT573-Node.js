@@ -4,7 +4,7 @@ export const usersTable = sqliteTable("users", {
   id: int().primaryKey({ autoIncrement: true }),
   userName: text().notNull().unique(),
   password: text().notNull(),
-  role: text().notNull().default("player"), // "admin", "player"
+  role: text({ enum: ["admin", "player"] }).notNull().default("player"),
 })
 
 // -----Otázky-----
@@ -17,10 +17,9 @@ export const questionsTable = sqliteTable("questions", {
     id: int().primaryKey({ autoIncrement: true }),
     setId: int().references(() => questionSetsTable.id).notNull(),
     orderInSet: int().notNull(),
-    type: text().notNull(), // "open_single", "open_double", 
-                            // "multiple_choice", "number_guess" 
+    type: text({ enum: ["open_single", "open_double", "multiple_choice", "number_guess"] }).notNull(),
     questionText: text().notNull(),
-    mediaType: text(), // "image", "video", "audio", null
+    mediaType: text({ enum: ["image", "video", "audio"] }),
     mediaUrl: text(),
 }, (table) => [
     uniqueIndex("unique_order_in_set").on(table.setId, table.orderInSet)
@@ -47,7 +46,7 @@ export const openDoubleQuestionTable = sqliteTable("openDoubleDetails", {
 export const multipleChoiceQuestionTable = sqliteTable("multipleChoiceDetails", {
     questionId: int().references(() => questionsTable.id).notNull(),
     points: real().notNull().default(1),
-    options: text().notNull(), // { 0: optionA, 1: optionB ...}
+    options: text({ mode: "json" }).notNull(), // { 0: optionA, 1: optionB ...}
     correctAnswerIndex: int().notNull(),
 }, (table) => [
     primaryKey({ columns: [table.questionId] }),
@@ -69,9 +68,10 @@ export const gamesTable = sqliteTable("games", {
     gamePin: text().notNull().unique(),
     maxPlayers: int().notNull(),
     currentQuestionId: int().references(() => questionsTable.id),
-    status: text().default("waiting"),  // "waiting", "round-start", "round-finish", 
-                                        // "round-answers", "question-display", "question-answering", 
-                                        // "question-closed", "round-results", "final results"
+    status: text({ enum: [
+        "waiting", "round-start", "round-finish", "round-answers",
+        "question-display", "question-answering", "question-closed",
+        "round-results", "final results"] }).default("waiting"),
     active: int({ mode: "boolean" }).notNull().default(false),
 })
 
