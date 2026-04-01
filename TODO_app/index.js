@@ -4,6 +4,8 @@ import ejs from 'ejs'
 import { drizzle } from "drizzle-orm/libsql"
 import { todosTable } from './src/schema.js'
 import { eq } from "drizzle-orm"
+import { createNodeWebSocket } from '@hono/node-ws'
+import { WSContext } from 'hono/ws'
 
 const db = drizzle({
   connection: "file:db.sqlite",
@@ -13,6 +15,8 @@ const db = drizzle({
 const app = new Hono()
 
 const username = "Tomáš"
+
+const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({app})
 
 function getReturnUrl(c) {
     const referer = c.req.header('referer')
@@ -24,6 +28,28 @@ function getReturnUrl(c) {
         return '/'
     }
 }
+
+/**
+ * @type {Set<WSContext<WebSocket>>}
+ */
+let webSockets = new Set()
+
+app.get(
+  '/ws',
+  upgradeWebSocket((c) => ({
+    onOpen: (evt, ws) => {
+      webSockets.add(ws)
+      console.log('open web sockets:', webSockets.size)
+    },
+    onMessage: () => {
+      console.log('message')
+    },
+    onClose: (evt, ws) => {
+      console.log('close')
+      webSockets.delete(ws)
+    },
+  })),
+)
 
 function mapPriority(priorityValue) {
     switch (String(priorityValue)) {
@@ -171,8 +197,23 @@ app.post('/edit-todo/:id', async (c) => {
 
     await db.update(todosTable).set(updatedFields).where(eq(todosTable.id, id))
 
+    sendTodosUpdate()
+
     return c.redirect(getReturnUrl(c))
 })
+
+const sendTodosUpdate = async () => {
+    try {
+        const todos = await db.select().from(todosTable).all()
+        const table = await ejs.renderFile('views/_todos.html', { todos: todos })
+        for (const webSocket of webSockets) {
+            webSocket.send(table)
+        }
+    } catch (error) {
+        console.error(error)
+    }
+}
+
 
 app.get('/todo/:id', async (c) => {
     const id = Number(c.req.param('id'))
@@ -192,9 +233,11 @@ app.notFound(async(c) => {
     return c.html(html)
 })
 
-serve({
+const server = serve({
     fetch: app.fetch,
     port: 8000,
 }, (info) => {
     console.log(`Server spuštěn na  http://localhost:${info.port}`)
 })
+
+injectWebSocket(server)

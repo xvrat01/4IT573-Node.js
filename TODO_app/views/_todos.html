@@ -1,0 +1,34 @@
+   <table>
+        <h2>Seznam TODO</h2>
+        <% if (todos.length === 0) { %>
+            <tr>
+                <td colspan="3">Žádné todo k zobrazení.</td>
+            </tr>
+        <% } else { %>
+            <% for (const todo of todos) { %>
+                <tr>
+                    <td>
+                        <%= todo.done?  '✅' : '❌' %>
+                    </td>
+                    <td style="min-width: 100px; max-width: 200px">
+                        <a href="/todo/<%= todo.id %>"><%= todo.title %></a>
+                    </td>
+                    <td>
+                        Priorita:
+                        <span class="<%= todo.priority === 'nízká' ? 'priority-low' : (todo.priority === 'vysoká' ? 'priority-high' : 'priority-normal') %>">
+                            <%= todo.priority %>
+                        </span>
+                    </td>
+                    <td>
+                        <form method="post" action="edit-todo/<%= todo.id %>" style="display: inline">
+                            <input type="checkbox" name="toggle" checked hidden>
+                            <button type="submit">Onačit jako <%= todo.done ? 'ne' : '' %>hotové</button>
+                        </form>
+                        <% if (todo.done) { %>
+                            <a href="/remove-todo/<%= todo.id %>" onclick="return confirm('Opravdu chceš odstranit todo \'<%= todo.title %>\'?')">Odstranit</a>
+                        <% } %>
+                    </td>
+                </tr>
+            <% } %>
+        <% } %>
+    </table>
