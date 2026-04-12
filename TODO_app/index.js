@@ -223,7 +223,7 @@ const sendWSMessage = async (name, type, id) => {
 app.get('/todo/:id', async (c) => {
     const id = Number(c.req.param('id'))
     const todo = await db.select().from(todosTable).where(eq(todosTable.id, id)).get()
-    if (!todo) return await next()
+    if (!todo) return c.redirect('/')
 
     const html = await ejs.renderFile('views/todo.html', {
         todo: todo,
