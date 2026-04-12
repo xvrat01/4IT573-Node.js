@@ -67,22 +67,7 @@ function mapPriority(priorityValue) {
     }
 }
 
-app.use(async(c, next) => {
-    console.log(c.req.method, c.req.url)
-    if (c.req.method === 'POST') {
-        const formData = await c.req.formData()
-        console.log('Form data:')
-        for (const [key, value] of formData.entries()) {
-            console.log(`  ${key}: ${value}`)
-        }
-    }
-    await next()
-})
-
-app.get('/', async(c) => {
-    const doneFilter = c.req.query('done') || 'all'
-    const priorityFilter = c.req.query('priority') || '0'
-    const sort = c.req.query('sort') || 'default'
+async function getFilteredList(doneFilter, priorityFilter, sort) {
     const todos = await db.select().from(todosTable).all()
     let filteredTodos = todos
 
@@ -99,7 +84,6 @@ app.get('/', async(c) => {
         }
     }
     
-
     if (priorityFilter !== '0') {
         const mappedPriority = mapPriority(priorityFilter)
         filteredTodos = filteredTodos.filter((todo) => todo.priority === mappedPriority)
@@ -113,17 +97,37 @@ app.get('/', async(c) => {
             case 'pendingFirst':
                 filteredTodos.sort((a, b) => a.done - b.done)
                 break
-            case '↓ priority':
+            case 'priorityDesc':
                 const priorityOrder = { 'nízká': 1, 'normální': 2, 'vysoká': 3 }
                 filteredTodos.sort((a, b) => priorityOrder[b.priority] - priorityOrder[a.priority])
                 break
-            case '↑ priority':
+            case 'priorityAsc':
                 const priorityOrderAsc = { 'nízká': 1, 'normální': 2, 'vysoká': 3 }
                 filteredTodos.sort((a, b) => priorityOrderAsc[a.priority] - priorityOrderAsc[b.priority])
                 break
             default:
-        }  
+        }
     }
+    return filteredTodos
+}
+
+app.use(async(c, next) => {
+    console.log(c.req.method, c.req.url)
+    if (c.req.method === 'POST') {
+        const formData = await c.req.formData()
+        console.log('Form data:')
+        for (const [key, value] of formData.entries()) {
+            console.log(`  ${key}: ${value}`)
+        }
+    }
+    await next()
+})
+
+app.get('/', async(c) => {
+    const doneFilter = c.req.query('done') || 'all'
+    const priorityFilter = c.req.query('priority') || '0'
+    const sort = c.req.query('sort') || 'default'
+    const filteredTodos = await getFilteredList(doneFilter, priorityFilter, sort)
 
     const html = await ejs.renderFile('views/index.html', {
         name: username,
@@ -131,9 +135,16 @@ app.get('/', async(c) => {
         doneFilter: doneFilter,
         priorityFilter: priorityFilter,
         sort: sort
-        }
-    )
+    })
+    return c.html(html)
+})
 
+app.get('/todos-filtered', async(c) => {
+    const doneFilter = c.req.query('done') || 'all'
+    const priorityFilter = c.req.query('priority') || '0'
+    const sort = c.req.query('sort') || 'default'
+    const filteredTodos = await getFilteredList(doneFilter, priorityFilter, sort)
+    const html = await ejs.renderFile('views/_todos.html', { todos: filteredTodos })
     return c.html(html)
 })
 
@@ -147,23 +158,24 @@ app.post('/add-todo', async(c) => {
     if (!title) {
         return c.redirect('/')
     }
-    await db.insert(todosTable).values({
-        title,
-        priority: mappedPriority,
-        description: description,
-        done: false
-    })
+    const [newTodo] = await db.
+        insert(todosTable).
+        values({
+            title,
+            priority: mappedPriority,
+            description: description,
+            done: false
+        })
+        .returning({ id: todosTable.id })
+    const id = newTodo?.id
+    sendWSMessage("todosUpdate", "new", id)
     return c.redirect('/')
 })
 
 app.get('/remove-todo/:id', async (c) => {
     const id = Number(c.req.param('id'))
     await db.delete(todosTable).where(eq(todosTable.id, id))
-    return c.redirect('/')
-})
-
-app.get('/delete-completed', async (c) => {
-    await db.delete(todosTable).where(eq(todosTable.done, true))
+    sendWSMessage("todosUpdate", "delete", id)
     return c.redirect('/')
 })
 
@@ -197,23 +209,16 @@ app.post('/edit-todo/:id', async (c) => {
 
     await db.update(todosTable).set(updatedFields).where(eq(todosTable.id, id))
 
-    sendTodosUpdate()
+    sendWSMessage("todosUpdate", "update", id)
 
     return c.redirect(getReturnUrl(c))
 })
 
-const sendTodosUpdate = async () => {
-    try {
-        const todos = await db.select().from(todosTable).all()
-        const table = await ejs.renderFile('views/_todos.html', { todos: todos })
-        for (const webSocket of webSockets) {
-            webSocket.send(table)
-        }
-    } catch (error) {
-        console.error(error)
+const sendWSMessage = async (name, type, id) => {
+    for (const webSocket of webSockets) {
+        webSocket.send(JSON.stringify({"name": name,"type": type, "id": id}))
     }
 }
-
 
 app.get('/todo/:id', async (c) => {
     const id = Number(c.req.param('id'))
@@ -224,6 +229,13 @@ app.get('/todo/:id', async (c) => {
         todo: todo,
         }
     )
+    return c.html(html)
+})
+
+app.get('/todo-details/:id', async(c) => {
+    const id = Number(c.req.param('id'))
+    const todo = await db.select().from(todosTable).where(eq(todosTable.id, id)).get()
+    const html = await ejs.renderFile('views/_todo.html', { todo: todo })
     return c.html(html)
 })
 

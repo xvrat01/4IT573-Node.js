@@ -22,16 +22,10 @@
     </style>
 </head>
 <body>
-    <h1><%= todo.done?  '✅' : '❌' %> <%=todo.title %></h1>
-    <p style="font-weight: bold;">Priorita: 
-        <span class="<%= todo.priority === 'nízká' ? 'priority-low' : (todo.priority === 'vysoká' ? 'priority-high' : 'priority-normal') %>">
-            <%= todo.priority %>
-        </span>
-    </p>
-    <% if (todo.description !== '') { %>
-        <p><span style="font-weight: bold;">Popis:</span> <%= todo.description %></p>
-    <% } %>
-    <details>
+    <div id="todo-details">
+        <%- include('_todo.html', { todo: todo }) %>
+    </div>
+    <details id="edit">
         <summary>Upravit todo</summary>
         Pouze pole, která vyplníš, budou aktualizována. Pro změnu stavu zaškrtni checkbox.
         <hr style="width: 500px; margin-left: 0px">
@@ -61,8 +55,38 @@
     </details>
     <hr style="width: 500px; margin-left: 0px">
     <% if (todo.done) { %>
-        <a href="/remove-todo/<%= todo.id %>" onclick="return confirm('Opravdu chceš odstranit todo \'<%= todo.title %>\'?')">Odstranit</a><br><br>
+        <a id="remove" href="/remove-todo/<%= todo.id %>" onclick="return confirm('Opravdu chceš odstranit todo \'<%= todo.title %>\'?')">Odstranit</a><br><br>
     <% } %>
     <a href="/">Zpět na hlavní stránku</a>
 </body>
+<script>
+        const ws = new WebSocket(`ws://${window.location.host}/ws`)
+        const id = Number(window.location.pathname.split('/').pop())
+
+        ws.addEventListener('open', () => {
+            console.log('WebSocket connection established')
+        })
+
+        ws.addEventListener('message', (event) => {
+            const json = JSON.parse(event.data)
+
+            if (json.name === "todosUpdate" && json.type == "update" && json.id == id) {
+                console.log('Todos update received:', json)
+                fetch(`/todo-details/${id}`)
+                    .then(response => response.text())
+                    .then(html => {
+                        document.getElementById('todo-details').innerHTML = html
+                    })
+            } else if (json.name === "todosUpdate" && json.type == "delete" && json.id == id) {
+                console.log('Todo delete received:', json)
+                document.getElementById('status').innerHTML = '🗑️'
+                document.getElementById('description').innerText = 'Todo bylo odstraněno.'
+                document.getElementById('edit').remove()
+                const removeButton = document.getElementById('remove')
+                if (removeButton) {
+                    removeButton.remove()
+                }
+            }
+        })
+</script>
 </html>

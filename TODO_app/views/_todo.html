@@ -1,0 +1,7 @@
+<h1><span id="status"><%= todo.done?  '✅' : '❌' %></span> <%=todo.title %></h1>
+<p style="font-weight: bold;">Priorita: 
+    <span class="<%= todo.priority === 'nízká' ? 'priority-low' : (todo.priority === 'vysoká' ? 'priority-high' : 'priority-normal') %>">
+        <%= todo.priority %>
+    </span>
+</p>
+<p><span id="description" style="font-weight: bold;"><%= todo.description !== ''? 'Popis: ' : '' %></span> <%= todo.description %></p>

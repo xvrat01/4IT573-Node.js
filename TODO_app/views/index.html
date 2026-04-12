@@ -85,14 +85,23 @@
     <hr style="width: 300px; margin-left: 0px">  
     <script>
         const ws = new WebSocket("ws://localhost:8000/ws")
+
         ws.addEventListener('open', () => {
             console.log('WS open')
             ws.send('Hello, World!')
-      })
+        })
 
-      ws.addEventListener('message', (event) => {
-        document.getElementById('todos').innerHTML = event.data
-      })
+        ws.addEventListener('message', (event) => {
+            const json = JSON.parse(event.data)
+            if (json.name === "todosUpdate") {
+                console.log('Todos update received:', json)
+                fetch(`/todos-filtered` + window.location.search)
+                    .then(response => response.text())
+                    .then(html => {
+                        document.getElementById('todos').innerHTML = html
+                    })
+            }
+        })
     </script>
 </body>
 </html>
