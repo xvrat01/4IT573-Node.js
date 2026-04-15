@@ -174,8 +174,13 @@ app.post('/add-todo', async(c) => {
 
 app.get('/remove-todo/:id', async (c) => {
     const id = Number(c.req.param('id'))
-    await db.delete(todosTable).where(eq(todosTable.id, id))
-    sendWSMessage("todosUpdate", "delete", id)
+    const todo = await db.select().from(todosTable).where(eq(todosTable.id, id)).get()
+    if (!todo) {
+        return c.redirect('/')
+    } else if (todo.done) {
+        await db.delete(todosTable).where(eq(todosTable.id, id))
+        sendWSMessage("todosUpdate", "delete", id)
+    }
     return c.redirect('/')
 })
 
